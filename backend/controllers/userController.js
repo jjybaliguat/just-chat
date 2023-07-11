@@ -54,7 +54,7 @@ export const loginUser = asyncHandler(async(req,res)=> {
             },
         },
         token_secret,
-        {expiresIn: '15m'}
+        {expiresIn: '30m'}
         )
 
         //send HTTP-only cookie
@@ -90,3 +90,94 @@ export const loginUser = asyncHandler(async(req,res)=> {
     }
     
 })
+
+export const refresh = asyncHandler( async(req, res) => {
+    const cookies = req.cookies
+    const tokenSecret = process.env.TOKEN_SECRET
+    const refreshSecret = process.env.REFRESH_SECRET
+
+    if (!cookies?.jwt){
+        res.status(401)
+        throw new Error('Unauthorized')
+    }
+
+    const refreshToken = cookies.jwt
+
+    jwt.verify(
+        refreshToken,
+        refreshSecret,
+        async (err, decoded) => {
+            if (err) return res.status(403).json({message: "Forbidden"})
+
+
+            const foundUser = await User.findById(decoded.id).exec()
+
+            if (!foundUser) return res.status(401).json({message: "Unauthorized"})
+
+            const token = jwt.sign(
+                {
+                    "UserInfo": {
+                        "id": foundUser._id,
+                    }
+                },
+                tokenSecret,
+                { expiresIn: '15m' }
+            )
+            const {_id, name, email, username, photo} = foundUser
+            res.status(200).json({
+                user: {
+                    _id, 
+                    name, 
+                    email, 
+                    username, 
+                    photo,
+                },
+                token: token
+            })
+        }
+    )
+})
+
+export const loginStatus = asyncHandler( async (req, res) => {
+    const token = req.cookies.jwt
+    const refress_token = process.env.REFRESH_SECRET
+    if(!token){
+        return res.json({
+            logged_in: false
+        })
+    }else{
+        const verified = jwt.verify(token, refress_token)
+        if(verified){
+            return res.json({
+                logged_in: true
+            })
+        }else{
+            return res.json({
+                logged_in: false
+            })
+        }
+    }
+})
+
+export const logout = asyncHandler( async(req, res) => {
+    const cookies = req.cookies
+    if (!cookies?.jwt) return res.sendStatus(204) //No content
+    res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true })
+    res.json({ message: 'Cookie cleared' })
+ })
+
+ export const searchUser = asyncHandler(async(req,res)=> {
+    const keyword = req.query.search
+        ? {
+            $or: [
+                {name: { $regex: req.query.search, $options: "i"}},
+                {username: { $regex: req.query.search, $options: "i"}},
+                {email: { $regex: req.query.search, $options: "i"}},
+            ],
+        }
+        : {};
+
+    const users = await User.find(keyword).find({_id: {$ne: req.user}})
+    res.send(users)
+
+ })
