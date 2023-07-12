@@ -29,7 +29,7 @@ export const registerUser = asyncHandler(async(req, res)=> {
 export const loginUser = asyncHandler(async(req,res)=> {
     const {username, password} = req.body
     const token_secret = process.env.TOKEN_SECRET
-    const refresh_secret = process.env.RERESH_SECRET
+    const refresh_secret = process.env.REFRESH_SECRET
 
     if(!username || !password){
         res.status(400)
@@ -54,7 +54,7 @@ export const loginUser = asyncHandler(async(req,res)=> {
             },
         },
         token_secret,
-        {expiresIn: '30m'}
+        // {expiresIn: '30m'}
         )
 
         //send HTTP-only cookie
@@ -62,7 +62,7 @@ export const loginUser = asyncHandler(async(req,res)=> {
             "id": user._id
         },
         refresh_secret,
-        {expiresIn: '1d'}
+        // {expiresIn: '1d'}
         )
 
         res.cookie("jwt", refreshToken, {
@@ -121,7 +121,7 @@ export const refresh = asyncHandler( async(req, res) => {
                     }
                 },
                 tokenSecret,
-                { expiresIn: '15m' }
+                // { expiresIn: '30m' }
             )
             const {_id, name, email, username, photo} = foundUser
             res.status(200).json({
@@ -140,13 +140,13 @@ export const refresh = asyncHandler( async(req, res) => {
 
 export const loginStatus = asyncHandler( async (req, res) => {
     const token = req.cookies.jwt
-    const refress_token = process.env.REFRESH_SECRET
+    const refresh_secret = process.env.REFRESH_SECRET
     if(!token){
         return res.json({
             logged_in: false
         })
     }else{
-        const verified = jwt.verify(token, refress_token)
+        const verified = jwt.verify(token, refresh_secret)
         if(verified){
             return res.json({
                 logged_in: true
