@@ -41,7 +41,8 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
     pingTimeout: 60000,
     cors: {
-        origin: corsOptions
+        origin: "http://localhost:3000",
+        credentials: true
     }
 });
 
@@ -67,6 +68,7 @@ io.on("connection", (socket) => {
         if(!chat.users) return console.log('chat.users is not defined')
 
         chat.users.forEach(user=> {
+            console.log(newMessage.message)
             if(user._id == newMessage.sender._id) return;
 
             socket.in(user._id).emit("message_received", newMessage)

@@ -124,11 +124,11 @@ export const updateGroup = asyncHandler(async(req,res)=> {
 })
 
 export const addGroup = asyncHandler(async(req,res)=> {
-    const {chatId, userId} = req.body
+    const {chatId, users} = req.body
 
     const chatAdd = await Chat.findByIdAndUpdate(chatId, {
         $push: {
-            users: userId
+            users: {$each: users}
         },
         },
         {new: true}
@@ -144,7 +144,7 @@ export const addGroup = asyncHandler(async(req,res)=> {
     }
 })
 
-export const removeGroup = asyncHandler(async(req,res)=>{
+export const removeFromGroup = asyncHandler(async(req,res)=>{
     const {chatId, userId} = req.body
 
     const chatRemove = await Chat.findByIdAndUpdate(chatId, {
@@ -159,8 +159,22 @@ export const removeGroup = asyncHandler(async(req,res)=>{
 
     if(!chatRemove){
         res.status(400)
-        throw new Error("Something Wen wrong or chat not found")
+        throw new Error("Something Went wrong or chat not found")
     }else{
         res.status(200).json(chatRemove)
+    }
+})
+
+export const removeGroup = asyncHandler(async(req,res)=> {
+    const {chatId} = req.body
+
+    try {
+        const response = await Chat.findByIdAndDelete(chatId)
+        res.status(200).json({
+            message: 'Group deleted'
+        })
+    } catch (error) {
+        res.status(400)
+        throw new Error(error.message)
     }
 })

@@ -181,3 +181,53 @@ export const logout = asyncHandler( async(req, res) => {
     res.send(users)
 
  })
+
+ export const updateUser = asyncHandler(async(req,res)=>{
+    const user = await User.findById(req.user)
+
+    if(user){
+        const { newUsername, newEmail, newPhoto, currentPass} = req.body
+        const {name, username, email, password, photo} = user
+
+        if(newEmail !== email){
+            const checkEmailExist = await User.findOne({email: newEmail})
+            if(checkEmailExist){
+                res.status(400)
+                throw new Error("Email already taken")
+            }
+        }
+        if(currentPass){
+            const matched = await bcrypt.compare(currentPass, user.password)
+            console.log(matched);
+            if(!matched){
+                res.status(400)
+                throw new Error("Invalid current password!")
+            }
+        }
+
+        user.username = newUsername || username
+        user.name = req.body.name || name
+        user.photo = newPhoto || photo
+        user.email = newEmail || email
+        user.password = req.body.password || password
+
+        const updatedUser = await user.save()
+
+        res.status(200).json({
+            user: {
+                _id: updatedUser._id,
+                username: updatedUser.username,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                photo: updatedUser.photo,
+            }
+        })
+    }else{
+        res.status(404)
+        throw new Error("User account not found")
+    }
+ })
+
+//  const changePassword = asyncHandler(async(req,res)=>{
+
+//  })
