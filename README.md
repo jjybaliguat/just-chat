@@ -53,3 +53,11 @@ Start the Server
   cd backend
   npm run dev
 ```
+
+# BACKEND ENVIRONMENT VARIABLES
+
+- PORT (port number ex. 5000)
+- MONGO_URI (get the connection url from your mongodb database)
+- NODE_ENV (value="development")
+- TOKEN_SECRET (any string)
+- REFRESH_SECRET (any string)
